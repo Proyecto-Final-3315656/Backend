@@ -1,38 +1,26 @@
--- 1. Crear la base de datos
-CREATE DATABASE IF NOT EXISTS inventario_adso;
+CREATE DATABASE IF NOT EXISTS tareas_adso;
 
--- 2. Crear el usuario restringido a localhost
 CREATE USER 'app_user'@'localhost' IDENTIFIED BY '#ADSO_node';
-
--- 3. Asignar todos los privilegios de ESA base de datos a ESTE usuario
-GRANT ALL PRIVILEGES ON inventario_adso.* TO 'app_user'@'localhost';
-
--- 4. Aplicar los cambios de privilegios inmediatamente
+GRANT ALL PRIVILEGES ON tareas_adso.* TO 'app_user'@'localhost';
 FLUSH PRIVILEGES;
 
--- 5. Seleccionar la base de datos para empezar a crear las tablas
-USE inventario_adso;
+USE tareas_adso;
 
--- 6. Crear la tabla de Categorías (Debe ir primero porque no depende de nadie)
-CREATE TABLE categories (
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    created_ud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_up TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    email VARCHAR(150) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 7. Crear la tabla de Productos
-CREATE TABLE products (
+CREATE TABLE tareas (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    categori_id INT NOT NULL,
-    created_ud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_up TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Definición de la Llave Foránea con restricción de eliminación
-    CONSTRAINT fk_product_category 
-    FOREIGN KEY (categori_id) 
-    REFERENCES categories(id)
-    ON DELETE RESTRICT 
-    ON UPDATE CASCADE
+    idUsuario INT NOT NULL,
+    nombreUsuario VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL,
+    estado ENUM('Pendiente', 'En Proceso', 'Completada') DEFAULT 'Pendiente',
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_tarea_usuario FOREIGN KEY (idUsuario) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );

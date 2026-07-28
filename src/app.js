@@ -1,22 +1,43 @@
 import express from "express";
-import productRouter from "./routes/product.routes.js";
-import categoryRouter from "./routes/category.routes.js";
+import { fileURLToPath } from "url";
+import path from "path";
+import userRouter from "./routes/user.routes.js";
+import tareaRouter from "./routes/tarea.routes.js";
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const frontendPath = path.resolve(__dirname, "../../Modularizacion2-/Modulos");
+app.use(express.static(frontendPath));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => {
+app.get("/api", (req, res) => {
   res.status(200).json({
     success: true,
-    messaje: "Saludo de la API",
+    message: "Saludo de la API",
     data: [],
     errors: [],
   });
-})
+});
 
-app.use("/products", productRouter);
-app.use("/categories", categoryRouter);
+app.use("/users", userRouter);
+app.use("/tareas", tareaRouter);
+
+app.use((req, res) => {
+  if (!req.path.startsWith("/api") && !req.path.startsWith("/users") && !req.path.startsWith("/tareas")) {
+    res.sendFile(path.join(frontendPath, "index.html"));
+  } else {
+    res.status(404).json({
+      success: false,
+      message: "Ruta no encontrada",
+      data: [],
+      errors: [],
+    });
+  }
+});
 
 export default app;
