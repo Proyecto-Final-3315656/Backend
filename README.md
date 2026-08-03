@@ -1,65 +1,97 @@
-# API de Productos - Arquitectura en Capas (Persistencia en Memoria)
+# API de Usuarios y Tareas - Arquitectura en Capas (Node.js + MySQL)
 
-Bienvenido a este proyecto de aprendizaje. El objetivo de esta API es comprender el flujo de la información en el backend utilizando **Node.js** y **ES Modules**. 
-
-Para enfocarnos 100% en la lógica de programación y la estructura del proyecto, esta primera versión utiliza **persistencia en memoria** (un arreglo de datos) en lugar de un motor de base de datos tradicional. Esto nos permite aislar el aprendizaje de la arquitectura antes de introducir la complejidad de SQL.
+Backend de aprendizaje en **Node.js** con **ES Modules**, organizado en **arquitectura por capas** (rutas → controladores → modelos) y con **persistencia real en MySQL**.
 
 ---
 
-## 1. Instalación y Configuración Inicial
+## 1. Instalación y configuración
 
-Para poner en marcha este proyecto, primero debemos inicializar nuestro entorno de Node e instalar las herramientas necesarias.
-
-### Comandos de instalación:
 ```bash
-# 1. Inicializar el proyecto (crea el package.json)
-npm init -y
+# 1. Instalar dependencias
+npm install
 
-# 2. Instalar el framework principal
-npm install express
+# 2. Crear la base de datos y las tablas
+#    Ejecuta database.sql en MySQL (Workbench o terminal)
 
-# 3. Instalar la herramienta de desarrollo (como dependencia de desarrollo)
-npm install -D nodemon
-``
-## 2. Estructura Jerárquica del Proyecto
+# 3. Configurar credenciales
+cp .env.example .env   # (Windows: copia manual) y ajusta si cambiaste contraseñas
 
-Para poner en marcha este proyecto, primero debemos inicializar nuestro entorno de Node e instalar las herramientas necesarias.
-`
+# 4. Cargar los datos iniciales en MySQL
+npm run seed
+
+# 5. Arrancar el servidor
+npm run dev            # o npm start
 ```
-## 2. Estructura Jerárquica del Proyecto
 
-La siguiente estructura organiza el código fuente separando la configuración global de la lógica de negocio y el almacenamiento de datos.
+Servidor disponible en: `http://localhost:3000`
+
+---
+
+## 2. Estructura del proyecto
 
 ```bash
 .
 ├── src/
-│   ├── controllers/
-│   │   └── product.controller.js    # Manejo de peticiones y respuestas HTTP
-│   ├── data/
-│   │   └── products.data.js         # Fuente de datos (Arreglo en memoria)
-│   ├── models/
-│   │   └── product.model.js         # Lógica de acceso y manipulación de datos
-│   ├── routes/
-│   │   └── product.routes.js        # Definición de rutas y endpoints
-│   └── app.js                       # Configuración y middlewares de Express
-├── .gitignore                       # Archivos excluidos de Git (node_modules, .env)
-├── package.json                     # Dependencias y scripts del proyecto
-├── README.md                        # Documentación técnica
-└── server.js                        # Punto de entrada y arranque del servidor
-
+│   ├── controllers/       # Procesan peticiones y responden HTTP
+│   │   ├── user.controller.js
+│   │   └── tarea.controller.js
+│   ├── database/          # Conexión a MySQL (pool)
+│   │   └── db.js
+│   ├── data/              # Datos iniciales de referencia
+│   │   ├── users.data.js
+│   │   └── tareas.data.js
+│   ├── models/            # Única capa que accede a la base de datos
+│   │   ├── user.model.js
+│   │   └── tarea.model.js
+│   ├── routes/            # Definición de rutas y endpoints
+│   │   ├── user.routes.js
+│   │   └── tarea.routes.js
+│   ├── seed/              # Script que inserta los datos iniciales
+│   │   └── seed.js
+│   └── app.js             # Configuración y middlewares de Express
+├── docs/
+│   └── NFR.md             # Requisitos No Funcionales (guía de cumplimiento)
+├── .env.example           # Variables de entorno de ejemplo
+├── .gitignore             # Archivos excluidos de Git (node_modules, .env)
+├── database.sql           # Creación de la base de datos y tablas
+├── package.json           # Dependencias y scripts
+├── README.md              # Documentación técnica
+└── server.js              # Punto de entrada y arranque del servidor
 ```
 
-### 3. Guía de Componentes y Capas
+---
 
-Para que nuestro código sea ordenado y profesional, dividimos las tareas en diferentes "capas". Así es como funciona cada una:
+## 3. Capas y flujo de trabajo
 
-* **Raíz (`/`):** Es la base del proyecto. Aquí se encuentra el archivo **`server.js`**, que funciona únicamente como el **"interruptor"** de encendido. Su única misión es importar la configuración de la aplicación (`app.js`) y dar la orden de inicio para que el servidor empiece a escuchar peticiones.
+- **Rutas (`src/routes/`)**: reciben la URL y delegan en el controlador. No tienen lógica de negocio.
+- **Controladores (`src/controllers/`)**: validan la petición, llaman al modelo y construyen la respuesta JSON estandarizada.
+- **Modelos (`src/models/`)**: únicos que ejecutan las consultas SQL sobre MySQL.
+- **Base de datos**: `tareas_adso` con tablas `users` y `tareas` (definidas en `database.sql`).
 
-* **Carpeta `src/` (Source):** Es el corazón del proyecto donde vive todo nuestro código fuente.
-    * **`app.js` (El Motor):** Aquí es donde realmente **se configura el servidor**. Es el encargado de preparar a Express, instalar las herramientas de lectura (como el formato JSON) y conectar las rutas globales. Sin este archivo, el servidor no sabría cómo procesar la información.
+Formato de respuesta estándar en todas las rutas:
 
-* **Capas Internas (El flujo de trabajo):**
-    * **Routes (Rutas):** Es la "recepción" de nuestra API. Su trabajo es recibir la visita del usuario (la URL) y decidir a qué oficina (Controlador) debe enviarlo según lo que necesite hacer.
-    * **Controllers (Controladores):** Es el "cerebro" que toma las decisiones. Recibe los datos que envía el usuario, le pide ayuda al Modelo para procesarlos y finalmente responde al cliente con un mensaje de éxito o de error.
-    * **Models (Modelos):** Es el "especialista" en los datos. Es el único que sabe cómo buscar, filtrar o eliminar información. El resto de la aplicación no toca los datos directamente; siempre le pide el favor al Modelo.
-    * **Data (Almacén):** Es nuestra "bodega" temporal. Aquí guardamos el arreglo de objetos con nuestros productos. En esta etapa, los datos viven en la memoria, lo que nos permite practicar antes de usar una base de datos real.
+```json
+{ "success": true, "message": "Mensaje descriptivo", "data": [...], "errors": [] }
+```
+
+---
+
+## 4. Endpoints
+
+| Método | Ruta | Acción |
+| :--- | :--- | :--- |
+| GET | `/api` | Saludo de la API |
+| GET | `/users` | Listar usuarios |
+| GET | `/users/:id` | Buscar usuario por ID |
+| POST | `/users` | Crear usuario |
+| PATCH | `/users/:id` | Actualizar usuario |
+| DELETE | `/users/:id` | Eliminar usuario |
+| GET | `/tareas` | Listar tareas (usa `?idUsuario=` para filtrar) |
+| GET | `/tareas/:id` | Buscar tarea por ID |
+| POST | `/tareas` | Crear tarea |
+| PATCH | `/tareas/:id` | Actualizar tarea |
+| DELETE | `/tareas/:id` | Eliminar tarea |
+
+---
+
+> 📌 **Requisitos No Funcionales:** consulta [docs/NFR.md](docs/NFR.md) para ver cómo se cumplen los RNF (arquitectura por capas, separación de responsabilidades, flujo de Git y Pull Requests) y cómo probar el sistema.

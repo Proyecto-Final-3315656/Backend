@@ -1,38 +1,60 @@
-import tareasData from "../data/tareas.data.js";
+import pool from "../database/db.js";
+
+const mapTarea = (row) => ({
+  id: row.id,
+  idUsuario: row.idUsuario,
+  nombreUsuario: row.nombreUsuario,
+  descripcion: row.descripcion,
+  estado: row.estado,
+  createdAt: row.createdAt,
+  updatedAt: row.updated_at,
+});
 
 export const TareaModel = {
-  findAll: () => {
-    return tareasData;
+  findAll: async () => {
+    const [rows] = await pool.query("SELECT * FROM tareas ORDER BY id ASC");
+    return rows.map(mapTarea);
   },
 
-  findById: (id) => {
-    return tareasData.find((t) => t.id === id);
+  findById: async (id) => {
+    const [rows] = await pool.query("SELECT * FROM tareas WHERE id = ?", [id]);
+    return rows.length ? mapTarea(rows[0]) : null;
   },
 
-  findByUserId: (userId) => {
-    return tareasData.filter((t) => t.idUsuario === userId);
+  findByUserId: async (userId) => {
+    const [rows] = await pool.query(
+      "SELECT * FROM tareas WHERE idUsuario = ? ORDER BY id ASC",
+      [userId]
+    );
+    return rows.map(mapTarea);
   },
 
-  create: (newTarea) => {
-    const maxId = tareasData.reduce((max, t) => Math.max(max, t.id), 0);
-    const id = maxId + 1;
-    const tareaWithId = { id, ...newTarea };
-    tareasData.push(tareaWithId);
-    return tareaWithId;
+  create: async ({ idUsuario, nombreUsuario, descripcion, estado }) => {
+    const [result] = await pool.query(
+      "INSERT INTO tareas (idUsuario, nombreUsuario, descripcion, estado) VALUES (?, ?, ?, ?)",
+      [idUsuario, nombreUsuario || "", descripcion, estado || "Pendiente"]
+    );
+    return TareaModel.findById(result.insertId);
   },
 
-  update: (id, updatedFields) => {
-    const index = tareasData.findIndex((t) => t.id === id);
-    if (index === -1) return null;
+  update: async (id, fields) => {
+    const tarea = await TareaModel.findById(id);
+    if (!tarea) return null;
 
-    tareasData[index] = { ...tareasData[index], ...updatedFields };
-    return tareasData[index];
+    const idUsuario = fields.idUsuario ?? tarea.idUsuario;
+    const nombreUsuario = fields.nombreUsuario ?? tarea.nombreUsuario;
+    const descripcion = fields.descripcion ?? tarea.descripcion;
+    const estado = fields.estado ?? tarea.estado;
+
+    await pool.query(
+      "UPDATE tareas SET idUsuario = ?, nombreUsuario = ?, descripcion = ?, estado = ? WHERE id = ?",
+      [idUsuario, nombreUsuario, descripcion, estado, id]
+    );
+    return TareaModel.findById(id);
   },
 
-  delete: (id) => {
-    const index = tareasData.findIndex((t) => t.id === id);
-    if (index === -1) return false;
-    tareasData.splice(index, 1);
-    return true;
+  delete: async (id) => {
+    const [result] = await pool.query("DELETE FROM tareas WHERE id = ?", [id]);
+    return result.affectedRows > 0;
   },
 };

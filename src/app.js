@@ -27,16 +27,27 @@ app.get("/api", (req, res) => {
 app.use("/users", userRouter);
 app.use("/tareas", tareaRouter);
 
+const notFoundJson = {
+  success: false,
+  message: "Ruta no encontrada",
+  data: [],
+  errors: [],
+};
+
 app.use((req, res) => {
-  if (!req.path.startsWith("/api") && !req.path.startsWith("/users") && !req.path.startsWith("/tareas")) {
-    res.sendFile(path.join(frontendPath, "index.html"));
-  } else {
-    res.status(404).json({
-      success: false,
-      message: "Ruta no encontrada",
-      data: [],
-      errors: [],
+  const isApiPath =
+    req.path.startsWith("/api") ||
+    req.path.startsWith("/users") ||
+    req.path.startsWith("/tareas");
+
+  if (!isApiPath) {
+    res.sendFile(path.join(frontendPath, "index.html"), (err) => {
+      if (err) {
+        res.status(404).json(notFoundJson);
+      }
     });
+  } else {
+    res.status(404).json(notFoundJson);
   }
 });
 
