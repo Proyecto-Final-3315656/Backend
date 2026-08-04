@@ -1,3 +1,8 @@
+// ============================================================
+// src/controllers/proyecto.controller.js (Capa de Controlador)
+// Maneja las peticiones de la entidad Proyectos: valida, llama
+// al Modelo y responde JSON. Mismo patrón CRUD que el resto.
+// ============================================================
 import { ProyectoModel } from "../models/proyecto.model.js";
 
 const getAllProyectos = async (req, res) => {

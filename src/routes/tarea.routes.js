@@ -1,3 +1,9 @@
+// ============================================================
+// src/routes/tarea.routes.js (Capa de Rutas = "La Recepción")
+// Define los ENDPOINTS de la entidad Tareas y enlaza cada uno
+// con su controlador.
+// GET/POST en "/" y GET/PATCH/DELETE en "/:id".
+// ============================================================
 import { Router } from "express";
 import {
   getAllTareas,

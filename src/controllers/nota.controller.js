@@ -1,3 +1,8 @@
+// ============================================================
+// src/controllers/nota.controller.js (Capa de Controlador)
+// Maneja las peticiones de la entidad Notas: valida, llama
+// al Modelo y responde JSON. Mismo patrón CRUD que el resto.
+// ============================================================
 import { NotaModel } from "../models/nota.model.js";
 
 const getAllNotas = async (req, res) => {

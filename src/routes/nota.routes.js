@@ -1,3 +1,8 @@
+// ============================================================
+// src/routes/nota.routes.js (Capa de Rutas)
+// Endpoints de la entidad Notas montados en "/notas".
+// CRUD completo: listar, buscar por id, crear, actualizar, eliminar.
+// ============================================================
 import { Router } from "express";
 import {
   getAllNotas,

@@ -1,3 +1,8 @@
+// ============================================================
+// src/routes/proyecto.routes.js (Capa de Rutas)
+// Endpoints de la entidad Proyectos montados en "/proyectos".
+// CRUD completo: listar, buscar por id, crear, actualizar, eliminar.
+// ============================================================
 import { Router } from "express";
 import {
   getAllProyectos,

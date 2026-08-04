@@ -1,3 +1,8 @@
+// ============================================================
+// src/controllers/categoria.controller.js (Capa de Controlador)
+// Maneja las peticiones de la entidad Categorias: valida, llama
+// al Modelo y responde JSON. Mismo patrón CRUD que el resto.
+// ============================================================
 import { CategoriaModel } from "../models/categoria.model.js";
 
 const getAllCategorias = async (req, res) => {

@@ -1,3 +1,8 @@
+// ============================================================
+// src/routes/categoria.routes.js (Capa de Rutas)
+// Endpoints de la entidad Categorias montados en "/categorias".
+// CRUD completo: listar, buscar por id, crear, actualizar, eliminar.
+// ============================================================
 import { Router } from "express";
 import {
   getAllCategorias,

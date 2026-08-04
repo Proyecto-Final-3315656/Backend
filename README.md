@@ -1,65 +1,75 @@
-# API de Productos - Arquitectura en Capas (Persistencia en Memoria)
+# API Task Manager ADSO — Backend
 
-Bienvenido a este proyecto de aprendizaje. El objetivo de esta API es comprender el flujo de la información en el backend utilizando **Node.js** y **ES Modules**. 
+API REST en **Node.js + Express 5** con arquitectura en capas y persistencia en **MySQL**.  
+CORS está habilitado (`app.use(cors({ origin: true })`) para consumirse desde el frontend Vite.
 
-Para enfocarnos 100% en la lógica de programación y la estructura del proyecto, esta primera versión utiliza **persistencia en memoria** (un arreglo de datos) en lugar de un motor de base de datos tradicional. Esto nos permite aislar el aprendizaje de la arquitectura antes de introducir la complejidad de SQL.
-
----
-
-## 1. Instalación y Configuración Inicial
-
-Para poner en marcha este proyecto, primero debemos inicializar nuestro entorno de Node e instalar las herramientas necesarias.
-
-### Comandos de instalación:
-```bash
-# 1. Inicializar el proyecto (crea el package.json)
-npm init -y
-
-# 2. Instalar el framework principal
-npm install express
-
-# 3. Instalar la herramienta de desarrollo (como dependencia de desarrollo)
-npm install -D nodemon
-``
-## 2. Estructura Jerárquica del Proyecto
-
-Para poner en marcha este proyecto, primero debemos inicializar nuestro entorno de Node e instalar las herramientas necesarias.
-`
-```
-## 2. Estructura Jerárquica del Proyecto
-
-La siguiente estructura organiza el código fuente separando la configuración global de la lógica de negocio y el almacenamiento de datos.
+## Arranque
 
 ```bash
-.
-├── src/
-│   ├── controllers/
-│   │   └── product.controller.js    # Manejo de peticiones y respuestas HTTP
-│   ├── data/
-│   │   └── products.data.js         # Fuente de datos (Arreglo en memoria)
-│   ├── models/
-│   │   └── product.model.js         # Lógica de acceso y manipulación de datos
-│   ├── routes/
-│   │   └── product.routes.js        # Definición de rutas y endpoints
-│   └── app.js                       # Configuración y middlewares de Express
-├── .gitignore                       # Archivos excluidos de Git (node_modules, .env)
-├── package.json                     # Dependencias y scripts del proyecto
-├── README.md                        # Documentación técnica
-└── server.js                        # Punto de entrada y arranque del servidor
-
+cd "D:/ADSO/3315656/Deivy/Backend"
+npm run dev        # nodemon -> http://localhost:3000
+# (producción) npm start
 ```
 
-### 3. Guía de Componentes y Capas
+## `.env` (configuración DB)
 
-Para que nuestro código sea ordenado y profesional, dividimos las tareas en diferentes "capas". Así es como funciona cada una:
+```
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=deivy
+DB_PASSWORD=12345
+DB_NAME=tareas_adso
+DB_CHARSET=utf8
+```
 
-* **Raíz (`/`):** Es la base del proyecto. Aquí se encuentra el archivo **`server.js`**, que funciona únicamente como el **"interruptor"** de encendido. Su única misión es importar la configuración de la aplicación (`app.js`) y dar la orden de inicio para que el servidor empiece a escuchar peticiones.
+`src/config/db.js` crea la pool y la DB automáticamente si no existe.
 
-* **Carpeta `src/` (Source):** Es el corazón del proyecto donde vive todo nuestro código fuente.
-    * **`app.js` (El Motor):** Aquí es donde realmente **se configura el servidor**. Es el encargado de preparar a Express, instalar las herramientas de lectura (como el formato JSON) y conectar las rutas globales. Sin este archivo, el servidor no sabría cómo procesar la información.
+## Arquitectura en capas (`src/`)
 
-* **Capas Internas (El flujo de trabajo):**
-    * **Routes (Rutas):** Es la "recepción" de nuestra API. Su trabajo es recibir la visita del usuario (la URL) y decidir a qué oficina (Controlador) debe enviarlo según lo que necesite hacer.
-    * **Controllers (Controladores):** Es el "cerebro" que toma las decisiones. Recibe los datos que envía el usuario, le pide ayuda al Modelo para procesarlos y finalmente responde al cliente con un mensaje de éxito o de error.
-    * **Models (Modelos):** Es el "especialista" en los datos. Es el único que sabe cómo buscar, filtrar o eliminar información. El resto de la aplicación no toca los datos directamente; siempre le pide el favor al Modelo.
-    * **Data (Almacén):** Es nuestra "bodega" temporal. Aquí guardamos el arreglo de objetos con nuestros productos. En esta etapa, los datos viven en la memoria, lo que nos permite practicar antes de usar una base de datos real.
+```
+src/
+├── app.js          # Express: middlewares (express.json), CORS, rutas
+├── config/db.js    # Pool MySQL2 + creación automática de DB
+├── controllers/    # "El cerebro": valida, llama al Modelo, responde JSON
+├── models/         # "El especialista": solo ejecuta SQL (pool.query)
+├── routes/         # "La recepción": enlaza URLs <-> controllers
+└── data/           # seeds/ mocks estáticos (users.data.js, tareas.data.js)
+server.js           # Punto de arranque: importa app y levanta el listener
+```
+
+## Endpoints
+
+| Método | Ruta              | Controller         | Descripción |
+|--------|-------------------|--------------------|-------------|
+| GET    | `/tareas`         | `getAllTareas`     | Lista todas (filtra con `?idUsuario=N`) |
+| GET    | `/tareas/:id`     | `getTareaById`     | Tarea por id |
+| POST   | `/tareas`         | `createTarea`      | Crear (`titulo` o `descripcion` obligatorio) |
+| PATCH  | `/tareas/:id`     | `updateTarea`      | `{estado}` / `{descripcion}` parcial (whitelist de campos) |
+| DELETE | `/tareas/:id`     | `deleteTarea`      | Devuelve 404 si no existe |
+| GET    | `/usuarios`       | `getAllUsuarios`   | Lista usuarios |
+| GET    | `/users/:id`      | `getUserById`      | Alias `/api/users/:id` |
+| POST   | `/usuarios`       | `createUsuario`    | Crear usuario |
+| GET    | `/proyectos`      | proyecto.controller| Listado de proyectos |
+
+## Modelo de Tarea
+
+```
+tareas.id, idUsuario, nombreUsuario, titulo, descripcion, estado, id_proyecto
+estado ∈ {Pendiente, En Proceso, Completada}
+```
+
+`models/tarea.model.js` expone `findAll / findById / findByUsuario / findByProyecto / create / update / delete`.  
+El `update` recorre una whitelist y hace `UPDATE ... SET col=? WHERE id=?` solo con los campos enviados.
+
+## Estado en el Kanban
+
+El estado de una tarea puede cambiarse de tres formas — las tres quedan reflejadas en el tablero:
+1. **Tabla → button estado** (`tasksToTable.handlerCambiarEstado` PATCH + refresca Kanban).
+2. **Drag & drop** del Kanban (`adminView` `drop` → `updateTaskStatus` + `renderKanban`).
+3. **Modal de edición** de la tabla (PATCH descripción + refresca Kanban).
+
+## Notas para la demo
+
+- El backend debe estar arriba antes que el frontend (el Vite lo consume en caliente).
+- Los datos quedan limpios: 15 usuarios, 5 tareas (idUsuario=1, "Ana Torres").
+- Si el puerto 3000 está ocupado: `Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess`.
