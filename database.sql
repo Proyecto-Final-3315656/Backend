@@ -84,12 +84,15 @@ INSERT INTO proyectos (nombre, descripcion, id_usuario) VALUES
 ('Documentacion', 'Elaboracion de documentacion tecnica', 5);
 
 -- Tareas
-INSERT INTO tareas (titulo, descripcion, estado, id_proyecto) VALUES
-('Disenar interfaz', 'Crear wireframes de la app', 'Pendiente', 1),
-('Configurar servidor', 'Instalar y configurar Node.js', 'Completada', 3),
-('Crear endpoints', 'Desarrollar rutas de la API', 'En Proceso', 3),
-('Diseñar base de datos', 'Crear tablas y relaciones', 'Pendiente', 4),
-('Redactar manual', 'Escribir guia de usuario', 'Pendiente', 5);
+-- Se asocian a un usuario real (idUsuario + nombreUsuario) para que nunca
+--quede una tarea sin dueño (caso de columnas NULL antes). El idUsuario
+--coincide con el id del usuario dueño del proyecto correspondiente.
+INSERT INTO tareas (idUsuario, nombreUsuario, titulo, descripcion, estado, id_proyecto) VALUES
+(1, 'Ana Torres',    'Disenar interfaz',      'Crear wireframes de la app',    'Pendiente',  1),
+(3, 'Maria Lopez',   'Configurar servidor',   'Instalar y configurar Node.js', 'Completada', 3),
+(3, 'Maria Lopez',   'Crear endpoints',       'Desarrollar rutas de la API',   'En Proceso', 3),
+(4, 'Juan Perez',    'Diseñar base de datos', 'Crear tablas y relaciones',     'Pendiente',  4),
+(5, 'Laura Martinez','Redactar manual',       'Escribir guia de usuario',      'Pendiente',  5);
 
 -- Categorias
 INSERT INTO categorias (nombre, color) VALUES
