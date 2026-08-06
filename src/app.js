@@ -24,11 +24,11 @@ app.get("/api", (req, res) => {
   });
 });
 
-app.use("/users", userRouter);
+app.use("/usuarios", userRouter);
 app.use("/tareas", tareaRouter);
 
 app.use((req, res) => {
-  if (!req.path.startsWith("/api") && !req.path.startsWith("/users") && !req.path.startsWith("/tareas")) {
+  if (!req.path.startsWith("/api") && !req.path.startsWith("/usuarios") && !req.path.startsWith("/tareas")) {
     res.sendFile(path.join(frontendPath, "index.html"));
   } else {
     res.status(404).json({
