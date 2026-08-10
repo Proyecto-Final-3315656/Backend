@@ -1,21 +1,21 @@
 import { TareaModel } from "../models/tarea.model.js";
 
-const getAllTareas = (req, res) => {
+const getAllTareas = async (req, res) => {
   const { idUsuario } = req.query;
 
   if (idUsuario) {
-    const tareas = TareaModel.findByUserId(Number(idUsuario));
+    const tareas = await TareaModel.findByUserId(Number(idUsuario));
     return res.status(200).json(tareas);
   }
 
-  const tareas = TareaModel.findAll();
+  const tareas = await TareaModel.findAll();
   res.status(200).json(tareas);
 };
 
-const getTareaById = (req, res) => {
+const getTareaById = async (req, res) => {
   try {
     const { id } = req.params;
-    const tarea = TareaModel.findById(Number(id));
+    const tarea = await TareaModel.findById(Number(id));
 
     if (!tarea) {
       return res.status(404).json({
@@ -37,7 +37,7 @@ const getTareaById = (req, res) => {
   }
 };
 
-const createTarea = (req, res) => {
+const createTarea = async (req, res) => {
   const { idUsuario, nombreUsuario, descripcion, estado, createdAt } = req.body;
 
   if (!idUsuario || !descripcion) {
@@ -49,7 +49,7 @@ const createTarea = (req, res) => {
     });
   }
 
-  const newTarea = TareaModel.create({
+  const newTarea = await TareaModel.create({
     idUsuario,
     nombreUsuario,
     descripcion,
@@ -60,9 +60,9 @@ const createTarea = (req, res) => {
   res.status(201).json(newTarea);
 };
 
-const updateTarea = (req, res) => {
+const updateTarea = async (req, res) => {
   const { id } = req.params;
-  const updatedTarea = TareaModel.update(Number(id), req.body);
+  const updatedTarea = await TareaModel.update(Number(id), req.body);
 
   if (!updatedTarea) {
     return res.status(404).json({
@@ -76,10 +76,10 @@ const updateTarea = (req, res) => {
   res.status(200).json(updatedTarea);
 };
 
-const deleteTarea = (req, res) => {
+const deleteTarea = async (req, res) => {
   try {
     const { id } = req.params;
-    const isDeleted = TareaModel.delete(Number(id));
+    const isDeleted = await TareaModel.delete(Number(id));
 
     if (!isDeleted) {
       return res.status(404).json({

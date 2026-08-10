@@ -1,8 +1,8 @@
 import { UserModel } from "../models/user.model.js";
 
-const getUsuarios = (req, res) => {
+const getUsuarios = async (req, res) => {
   try {
-    const usuarios = UserModel.findAll();
+    const usuarios = await UserModel.findAll();
     return res.status(200).json({
       success: true,
       message: "Usuarios obtenidos correctamente",
@@ -19,10 +19,10 @@ const getUsuarios = (req, res) => {
   }
 };
 
-const getUsuarioById = (req, res) => {
+const getUsuarioById = async (req, res) => {
   try {
     const { id } = req.params;
-    const usuario = UserModel.findById(Number(id));
+    const usuario = await UserModel.findById(Number(id));
 
     if (!usuario) {
       return res.status(404).json({
@@ -44,7 +44,7 @@ const getUsuarioById = (req, res) => {
   }
 };
 
-const createUsuario = (req, res) => {
+const createUsuario = async (req, res) => {
   const { nombre, email, telefono } = req.body;
 
   if (!nombre || !email) {
@@ -56,15 +56,15 @@ const createUsuario = (req, res) => {
     });
   }
 
-  const newUser = UserModel.create({ nombre, email, telefono: telefono || "" });
+  const newUser = await UserModel.create({ nombre, email, telefono: telefono || "" });
   res.status(201).json(newUser);
 };
 
-const deleteUsuario = (req, res) => {
+const deleteUsuario = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const tareasUsuario = UserModel.delete(Number(id));
+    const tareasUsuario = await UserModel.delete(Number(id));
 
     if (typeof tareasUsuario === "object" && !tareasUsuario.deleted) {
       return res.status(409).json({

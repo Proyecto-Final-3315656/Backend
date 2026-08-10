@@ -1,38 +1,73 @@
-import tareasData from "../data/tareas.data.js";
+import pool from "../db/connection.js";
+
+const CAMPOS_ACTUALIZABLES = ["idUsuario", "nombreUsuario", "descripcion", "estado"];
+
+// Normaliza una fecha a formato MySQL: 'YYYY-MM-DD HH:MM:SS'
+function fechaSql(valor) {
+  const fecha = valor ? new Date(valor) : new Date();
+  return fecha.toISOString().slice(0, 19).replace("T", " ");
+}
 
 export const TareaModel = {
-  findAll: () => {
-    return tareasData;
+  findAll: async () => {
+    const [rows] = await pool.query(
+      "SELECT id, idUsuario, nombreUsuario, descripcion, estado, createdAt FROM tareas ORDER BY id"
+    );
+    return rows;
   },
 
-  findById: (id) => {
-    return tareasData.find((t) => t.id === id);
+  findById: async (id) => {
+    const [rows] = await pool.query(
+      "SELECT id, idUsuario, nombreUsuario, descripcion, estado, createdAt FROM tareas WHERE id = ?",
+      [id]
+    );
+    return rows[0] || null;
   },
 
-  findByUserId: (userId) => {
-    return tareasData.filter((t) => t.idUsuario === userId);
+  findByUserId: async (idUsuario) => {
+    const [rows] = await pool.query(
+      "SELECT id, idUsuario, nombreUsuario, descripcion, estado, createdAt FROM tareas WHERE idUsuario = ? ORDER BY id",
+      [idUsuario]
+    );
+    return rows;
   },
 
-  create: (newTarea) => {
-    const maxId = tareasData.reduce((max, t) => Math.max(max, t.id), 0);
-    const id = maxId + 1;
-    const tareaWithId = { id, ...newTarea };
-    tareasData.push(tareaWithId);
-    return tareaWithId;
+  create: async ({ idUsuario, nombreUsuario, descripcion, estado, createdAt }) => {
+    const [result] = await pool.query(
+      "INSERT INTO tareas (idUsuario, nombreUsuario, descripcion, estado, createdAt) VALUES (?, ?, ?, ?, ?)",
+      [
+        idUsuario,
+        nombreUsuario || "",
+        descripcion,
+        estado || "Pendiente",
+        fechaSql(createdAt),
+      ]
+    );
+    return TareaModel.findById(result.insertId);
   },
 
-  update: (id, updatedFields) => {
-    const index = tareasData.findIndex((t) => t.id === id);
-    if (index === -1) return null;
+  update: async (id, updatedFields) => {
+    const fieldsToUpdate = {};
+    for (const campo of CAMPOS_ACTUALIZABLES) {
+      if (updatedFields[campo] !== undefined) {
+        fieldsToUpdate[campo] = updatedFields[campo];
+      }
+    }
 
-    tareasData[index] = { ...tareasData[index], ...updatedFields };
-    return tareasData[index];
+    if (Object.keys(fieldsToUpdate).length === 0) return null;
+
+    const setClause = Object.keys(fieldsToUpdate)
+      .map((f) => `${f} = ?`)
+      .join(", ");
+    await pool.query(`UPDATE tareas SET ${setClause} WHERE id = ?`, [
+      ...Object.values(fieldsToUpdate),
+      id,
+    ]);
+    return TareaModel.findById(id);
   },
 
-  delete: (id) => {
-    const index = tareasData.findIndex((t) => t.id === id);
-    if (index === -1) return false;
-    tareasData.splice(index, 1);
-    return true;
+  delete: async (id) => {
+    const [result] = await pool.query("DELETE FROM tareas WHERE id = ?", [id]);
+    return result.affectedRows > 0;
   },
 };
