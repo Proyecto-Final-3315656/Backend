@@ -32,6 +32,9 @@ export const UserModel = {
     const user = await UserModel.findById(id);
     if (!user) return false;
 
+    // Borrado INDEPENDIENTE: solo elimina el usuario. Si tiene tareas
+    // vinculadas, se bloquea para no dejar datos huérfanos; las tareas
+    // se borran por separado (TareaModel.delete) antes de borrar el usuario.
     const [tareas] = await pool.query(
       "SELECT COUNT(*) AS total FROM tareas WHERE idUsuario = ?",
       [id]

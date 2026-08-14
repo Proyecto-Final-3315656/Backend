@@ -64,6 +64,9 @@ const deleteUsuario = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Borrado INDEPENDIENTE: el modelo solo elimina el usuario. Si tiene
+    // tareas vinculadas devuelve { deleted: false } -> 409 (Conflict).
+    // Las tareas se eliminan por separado (DELETE /tareas/:id).
     const tareasUsuario = await UserModel.delete(Number(id));
 
     if (typeof tareasUsuario === "object" && !tareasUsuario.deleted) {

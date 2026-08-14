@@ -1,7 +1,7 @@
 CREATE DATABASE IF NOT EXISTS tareas_adso;
 
-CREATE USER IF NOT EXISTS 'app_user'@'localhost' IDENTIFIED BY '#ADSO_node';
-GRANT ALL PRIVILEGES ON tareas_adso.* TO 'app_user'@'localhost';
+CREATE USER IF NOT EXISTS 'Grupo3'@'localhost' IDENTIFIED BY '12345';
+GRANT ALL PRIVILEGES ON tareas_adso.* TO 'Grupo3'@'localhost';
 FLUSH PRIVILEGES;
 
 USE tareas_adso;

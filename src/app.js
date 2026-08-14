@@ -9,7 +9,10 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const frontendPath = path.resolve(__dirname, "../../Modularizacion2-/Modulos");
+// Ruta de la build del frontend (vite build). Configurable por variable
+// de entorno FRONTEND_PATH; por defecto busca un dist/ dentro del repo.
+const frontendPath =
+  process.env.FRONTEND_PATH || path.resolve(__dirname, "../../frontend/dist");
 app.use(express.static(frontendPath));
 
 app.use(express.json());
