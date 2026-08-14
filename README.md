@@ -1,3 +1,51 @@
+# API de Tareas - Administrador de Tareas ADSO (Grupo 3)
+
+API de gestión de **usuarios** y **tareas** con **Node.js**, **Express**, **MySQL** y **ES Modules**.
+Sirve también la build del frontend (Vite) y se conecta a la base de datos `tareas_adso`.
+
+---
+
+## 🖥️ Cómo abrir el proyecto en otro computador (paso a paso)
+
+> Requisitos: tener instalados **Node.js**, **MySQL** (con la BD `tareas_adso` creada
+> ejecutando `database.sql` una sola vez) y haber clonado ambos repositorios
+> (backend y frontend).
+
+1. **Configurar en un solo comando:**
+   ```bash
+   # En la carpeta del BACKEND:
+   setup.bat
+   ```
+   El script instala las dependencias del backend y del frontend, crea el
+   archivo `.env` desde `.env.example` (si no existe) y comprueba que la base
+   de datos conecte.
+
+2. **Levantar el backend** (Terminal 1):
+   ```bash
+   cd ruta\Backend
+   npm run dev
+   ```
+
+3. **Levantar el frontend** (Terminal 2):
+   ```bash
+   cd ruta\Modulos
+   npm run dev
+   ```
+
+4. **Abrir el navegador en:** `http://localhost:5173`
+
+> **Notas:**
+> - El archivo `.env` **no se sube a git** (está en `.gitignore`). Si clonas el
+>   repo, el `setup.bat` lo crea automáticamente con `Grupo3` / `12345`.
+> - Si tu MySQL usa otras credenciales, edita el `.env` (variables `DB_USER`,
+>   `DB_PASSWORD`, `DB_NAME`).
+> - El servidor comprueba la conexión a MySQL al arrancar: si falla, verás el
+>   error exacto en la terminal (ya no es silencioso).
+
+---
+
+# Historial del proyecto (documentación original)
+
 # API de Productos - Arquitectura en Capas (Persistencia en Memoria)
 
 Bienvenido a este proyecto de aprendizaje. El objetivo de esta API es comprender el flujo de la información en el backend utilizando **Node.js** y **ES Modules**. 

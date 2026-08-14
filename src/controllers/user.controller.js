@@ -45,19 +45,28 @@ const getUsuarioById = async (req, res) => {
 };
 
 const createUsuario = async (req, res) => {
-  const { nombre, email, telefono } = req.body;
+  try {
+    const { nombre, email, telefono } = req.body;
 
-  if (!nombre || !email) {
-    return res.status(400).json({
+    if (!nombre || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "nombre y email son obligatorios",
+        data: [],
+        errors: [],
+      });
+    }
+
+    const newUser = await UserModel.create({ nombre, email, telefono: telefono || "" });
+    res.status(201).json(newUser);
+  } catch (error) {
+    res.status(500).json({
       success: false,
-      message: "nombre y email son obligatorios",
+      message: "Error al crear el usuario",
       data: [],
       errors: [],
     });
   }
-
-  const newUser = await UserModel.create({ nombre, email, telefono: telefono || "" });
-  res.status(201).json(newUser);
 };
 
 const deleteUsuario = async (req, res) => {
