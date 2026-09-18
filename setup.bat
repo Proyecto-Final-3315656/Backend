@@ -30,8 +30,8 @@ echo ============================================================
 echo  Paso 3/4: Instalando dependencias del FRONTEND...
 echo ============================================================
 set "FRONTEND_DIR="
-set /p "FRONTEND_DIR=Ingresa la ruta de la carpeta Modulos del frontend (o Enter para usar %BACKEND_DIR%..\fronted\Frontend-\Modulos): "
-if "%FRONTEND_DIR%"=="" set "FRONTEND_DIR=%BACKEND_DIR%..\fronted\Frontend-\Modulos"
+set /p "FRONTEND_DIR=Ingresa la ruta de la carpeta Modulos del frontend (o Enter para usar %BACKEND_DIR%..\..\fronted\Frontend-\Modulos): "
+if "%FRONTEND_DIR%"=="" set "FRONTEND_DIR=%BACKEND_DIR%..\..\fronted\Frontend-\Modulos"
 if not exist "%FRONTEND_DIR%\package.json" (
     echo.
     echo  ERROR: No se encontro package.json en:

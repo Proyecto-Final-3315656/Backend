@@ -4,9 +4,13 @@ import { testConnection } from "./src/db/connection.js";
 
 const PORT = process.env.PORT || 3000;
 
-// Comprueba la conexión a MySQL al arrancar y muestra un mensaje claro.
-testConnection();
+async function startServer() {
+  // No aceptar peticiones si MySQL no esta disponible.
+  await testConnection();
 
-app.listen(PORT, () => {
-  console.log(`Servidor encendido en el puerto ${PORT}`);
-});
+  app.listen(PORT, () => {
+    console.log(`Servidor encendido en el puerto ${PORT}`);
+  });
+}
+
+startServer();

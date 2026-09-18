@@ -5,42 +5,49 @@ Sirve también la build del frontend (Vite) y se conecta a la base de datos `tar
 
 ---
 
-## 🖥️ Cómo abrir el proyecto en otro computador (paso a paso)
+## Como abrir el proyecto en otro computador
 
-> Requisitos: tener instalados **Node.js**, **MySQL** (con la BD `tareas_adso` creada
-> ejecutando `database.sql` una sola vez) y haber clonado ambos repositorios
-> (backend y frontend).
+> Requisitos: tener instalados **Node.js** y **MySQL**, y haber copiado o clonado
+> las carpetas `Backend` y `Frontend-`. MySQL debe estar encendido antes de iniciar
+> el backend.
 
-1. **Configurar en un solo comando:**
+1. **Crear la base de datos una sola vez.** Abre MySQL con un usuario administrador
+   y ejecuta `Backend/database.sql`. El script crea `tareas_adso`, el usuario
+   `Grupo3` y las tablas necesarias.
+
+2. **Configurar dependencias:**
    ```bash
    # En la carpeta del BACKEND:
    setup.bat
    ```
    El script instala las dependencias del backend y del frontend, crea el
-   archivo `.env` desde `.env.example` (si no existe) y comprueba que la base
-   de datos conecte.
+   archivo `.env` desde `.env.example` (si no existe) y comprueba la conexión
+   a la base de datos. Si las carpetas están en las rutas habituales, usa por
+   defecto `C:\backend\Backend` y `C:\fronted\Frontend-\Modulos`.
 
-2. **Levantar el backend** (Terminal 1):
+3. **Levantar el backend** (Terminal 1):
    ```bash
    cd ruta\Backend
    npm run dev
    ```
 
-3. **Levantar el frontend** (Terminal 2):
+4. **Levantar el frontend** (Terminal 2):
    ```bash
    cd ruta\Modulos
    npm run dev
    ```
 
-4. **Abrir el navegador en:** `http://localhost:5173`
+5. **Abrir el navegador en:** `http://localhost:5173`
 
 > **Notas:**
 > - El archivo `.env` **no se sube a git** (está en `.gitignore`). Si clonas el
 >   repo, el `setup.bat` lo crea automáticamente con `Grupo3` / `12345`.
 > - Si tu MySQL usa otras credenciales, edita el `.env` (variables `DB_USER`,
 >   `DB_PASSWORD`, `DB_NAME`).
-> - El servidor comprueba la conexión a MySQL al arrancar: si falla, verás el
->   error exacto en la terminal (ya no es silencioso).
+> - Ejecuta los comandos del frontend dentro de `Frontend-\Modulos`; el
+>   `package.json` de la carpeta raíz no inicia la aplicación.
+> - El servidor solo abre el puerto después de comprobar MySQL. Si falla, verás
+>   el error exacto en la terminal.
 
 ---
 
