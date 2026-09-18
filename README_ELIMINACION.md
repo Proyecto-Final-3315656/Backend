@@ -603,6 +603,107 @@ export function abrirModalConfirmar(titulo, mensaje, tipo = 'info', onConfirmar)
 
 Tambien se puede cerrar sin borrar haciendo clic fuera de la caja (`modal.js:31-34`), pulsando `Escape` (`modal.js:37-40`) o usando el boton `X` (`modal.js:43`).
 
+# Origen y control del clic
+
+Esta seccion explica por que la eliminacion solo ocurre al pulsar los botones correctos y no al hacer clic en cualquier parte de la pantalla.
+
+## De donde nace el clic de eliminar
+
+Primero, `src/ui/toInsertIntoTable.js:32` crea el boton dentro de cada fila de tareas:
+
+```html
+<!-- El boton pertenece solamente a esta fila de tarea. -->
+<button class="btn-eliminar">Eliminar</button>
+```
+
+Despues, `src/ui/tasksToTable.js:24` busca exactamente ese boton de la fila recien creada y le asigna un evento `onclick`:
+
+```js
+// querySelector busca .btn-eliminar dentro de la fila actual.
+fila.querySelector('.btn-eliminar').onclick =
+    // Solo el clic sobre ese boton ejecuta handlerEliminar.
+    () => handlerEliminar(tarea.id, fila);
+```
+
+La aplicacion no usa un evento global sobre `document`, `body` ni toda la pantalla para borrar. El listener se conecta al elemento HTML concreto que tiene la clase `.btn-eliminar`. Cada fila tiene su propio boton y recibe el ID de su propia tarea.
+
+```text
+Clic en el boton "Eliminar" de una fila
+  -> se ejecuta handlerEliminar(tarea.id, fila)
+  -> se abre el modal de confirmacion
+  -> todavia no se envia ninguna peticion a la API
+```
+
+## Que clic confirma el borrado
+
+`handlerEliminar` abre `abrirModalConfirmar(...)`. Dentro de `src/ui/modal.js:128-136` se crea otro boton especifico: **Si, eliminar**.
+
+```js
+// Crea el boton de confirmacion dentro del modal.
+const btnSi = document.createElement('button');
+btnSi.type = 'button';
+btnSi.textContent = tipo === 'danger' ? 'Sí, eliminar' : 'Confirmar';
+btnSi.className = tipo === 'danger' ? 'btn-modal-primary danger' : 'btn-modal-primary';
+
+// Solo el clic en btnSi ejecuta la accion recibida en onConfirmar.
+btnSi.onclick = () => {
+    cerrarModal(); // Cierra visualmente el modal.
+    onConfirmar(); // Ejecuta DELETE /tareas/:id o el flujo de usuario.
+};
+```
+
+Por tanto, el recorrido de una tarea es:
+
+```text
+Clic en "Eliminar"
+  -> handlerEliminar(id, filaHTML)
+  -> abrirModalConfirmar(...)
+  -> clic en "Si, eliminar"
+  -> onConfirmar()
+  -> taskService.deleteTask(id)
+  -> DELETE /tareas/:id
+  -> Express, controlador, modelo y MySQL
+```
+
+Para eliminar un usuario, el primer clic ocurre en `.btn-borrar-usuario-fila` o `.btn-borrar-usuario`; ambos abren el mismo tipo de modal. El clic en **Si, eliminar** ejecuta entonces la secuencia de borrar tareas y despues borrar usuario.
+
+## Que pasa al pulsar en otro lugar
+
+El boton **Cancelar** tiene otro evento y no llama a `onConfirmar`:
+
+```js
+const btnNo = document.createElement('button');
+btnNo.type = 'button';
+btnNo.textContent = 'Cancelar';
+btnNo.className = 'btn-modal-secondary';
+
+// Cancelar solamente oculta el modal.
+btnNo.onclick = cerrarModal;
+```
+
+Tambien se puede cerrar haciendo clic en el fondo oscuro. `src/ui/modal.js:31-34` comprueba exactamente donde ocurrio el clic:
+
+```js
+overlay.addEventListener('click', (e) => {
+    // Solo cierra si el clic fue directamente sobre el fondo exterior.
+    if (e.target === overlay) cerrarModal();
+});
+```
+
+`e.target` es el elemento exacto que recibio el clic. Cuando se pulsa dentro de la caja del modal, por ejemplo sobre el texto, un boton o un espacio interno, `e.target` no es `overlay`; por eso no se cierra ni se elimina. La tecla `Escape` y el boton `X` tambien solo ejecutan `cerrarModal()`.
+
+| Lugar donde se hace clic | Funcion que se ejecuta | Se elimina informacion? |
+| --- | --- | --- |
+| Boton `Eliminar` | `handlerEliminar(...)` | No, solo abre el modal. |
+| Boton `Si, eliminar` | `onConfirmar()` | Si, inicia el DELETE. |
+| Boton `Cancelar` | `cerrarModal()` | No. |
+| Boton `X`, tecla `Escape` o fondo exterior | `cerrarModal()` | No. |
+| Texto o interior de la caja del modal | Ninguna accion de borrado | No. |
+
+### Respuesta corta para el instructor
+
+> "El clic nace en un boton especifico, no en toda la pantalla. Cada fila crea un boton con la clase `.btn-eliminar` y el codigo le asigna un `onclick` que abre el modal. El borrado solo se ejecuta si luego se hace clic en el boton `Si, eliminar` del modal, porque ese boton llama a `onConfirmar()`. Cancelar, la X, Escape y el fondo solo cierran el modal; no llaman a la funcion que envia el DELETE."
+
 # Observaciones importantes para responder preguntas
 
 1. **No hay borrado automatico en cascada.** La frase de comentario en `src/services/userService.js:42-44` que dice que el backend borra tareas en cascada no coincide con el codigo activo. El comportamiento real esta en `tasksToTable.js:134-140`: frontend borra tareas y luego usuario.
