@@ -1,136 +1,67 @@
 import { TareaModel } from "../models/tarea.model.js";
+import { parse, parseId, taskCreateSchema, taskUpdateSchema } from "../validators.js";
 
-const getAllTareas = async (req, res) => {
+function send(res, status, message, data) {
+  return res.status(status).json({ success: status < 400, message, data, errors: [] });
+}
+
+async function canAccessTask(taskId, user) {
+  return user.rol === "admin" || TareaModel.belongsToUser(taskId, user.sub);
+}
+
+export async function getAllTareas(req, res, next) {
   try {
-    const { idUsuario } = req.query;
-
-    if (idUsuario) {
-      const tareas = await TareaModel.findByUserId(Number(idUsuario));
-      return res.status(200).json(tareas);
-    }
-
-    const tareas = await TareaModel.findAll();
-    res.status(200).json(tareas);
+    const requestedUserId = req.query.idUsuario ? parseId(req.query.idUsuario) : null;
+    const userId = req.user.rol === "admin" ? requestedUserId : req.user.sub;
+    const tareas = userId ? await TareaModel.findByUserId(userId) : await TareaModel.findAll();
+    return send(res, 200, "Tareas obtenidas correctamente", tareas);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al obtener las tareas",
-      data: [],
-      errors: [],
-    });
+    return next(error);
   }
-};
+}
 
-const getTareaById = async (req, res) => {
+export async function getTareaById(req, res, next) {
   try {
-    const { id } = req.params;
-    const tarea = await TareaModel.findById(Number(id));
-
-    if (!tarea) {
-      return res.status(404).json({
-        success: false,
-        message: `Tarea con ID ${id} no encontrada`,
-        data: [],
-        errors: [],
-      });
-    }
-
-    res.status(200).json(tarea);
+    const id = parseId(req.params.id);
+    if (!(await canAccessTask(id, req.user))) return send(res, 403, "No tiene permisos para consultar esta tarea", null);
+    const tarea = await TareaModel.findById(id);
+    if (!tarea) return send(res, 404, "Tarea no encontrada", null);
+    return send(res, 200, "Tarea obtenida correctamente", tarea);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al procesar la búsqueda",
-      data: [],
-      errors: [],
-    });
+    return next(error);
   }
-};
+}
 
-const createTarea = async (req, res) => {
+export async function createTarea(req, res, next) {
   try {
-    const { idUsuario, nombreUsuario, descripcion, estado, createdAt } = req.body;
-
-    if (!idUsuario || !descripcion) {
-      return res.status(400).json({
-        success: false,
-        message: "idUsuario y descripcion son obligatorios",
-        data: [],
-        errors: [],
-      });
-    }
-
-    const newTarea = await TareaModel.create({
-      idUsuario,
-      nombreUsuario,
-      descripcion,
-      estado: estado || "Pendiente",
-      createdAt: createdAt || new Date().toISOString(),
-    });
-
-    res.status(201).json(newTarea);
+    const data = parse(taskCreateSchema, req.body);
+    const idUsuario = req.user.rol === "admin" && req.body.idUsuario ? parseId(req.body.idUsuario) : req.user.sub;
+    const tarea = await TareaModel.create({ ...data, idUsuario, createdAt: new Date().toISOString() });
+    return send(res, 201, "Tarea creada correctamente", tarea);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al crear la tarea",
-      data: [],
-      errors: [],
-    });
+    return next(error);
   }
-};
+}
 
-const updateTarea = async (req, res) => {
+export async function updateTarea(req, res, next) {
   try {
-    const { id } = req.params;
-    const updatedTarea = await TareaModel.update(Number(id), req.body);
-
-    if (!updatedTarea) {
-      return res.status(404).json({
-        success: false,
-        message: `Tarea con ID ${id} no encontrada`,
-        data: [],
-        errors: [],
-      });
-    }
-
-    res.status(200).json(updatedTarea);
+    const id = parseId(req.params.id);
+    if (!(await canAccessTask(id, req.user))) return send(res, 403, "No tiene permisos para actualizar esta tarea", null);
+    const tarea = await TareaModel.update(id, parse(taskUpdateSchema, req.body));
+    if (!tarea) return send(res, 404, "Tarea no encontrada", null);
+    return send(res, 200, "Tarea actualizada correctamente", tarea);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al actualizar la tarea",
-      data: [],
-      errors: [],
-    });
+    return next(error);
   }
-};
+}
 
-const deleteTarea = async (req, res) => {
+export async function deleteTarea(req, res, next) {
   try {
-    const { id } = req.params;
-    const isDeleted = await TareaModel.delete(Number(id));
-
-    if (!isDeleted) {
-      return res.status(404).json({
-        success: false,
-        message: `No se pudo eliminar: Tarea con ID ${id} no encontrada`,
-        data: [],
-        errors: [],
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Tarea eliminada correctamente",
-      data: [],
-      errors: [],
-    });
+    const id = parseId(req.params.id);
+    if (!(await canAccessTask(id, req.user))) return send(res, 403, "No tiene permisos para eliminar esta tarea", null);
+    if (!(await TareaModel.delete(id))) return send(res, 404, "Tarea no encontrada", null);
+    return send(res, 200, "Tarea eliminada correctamente", null);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al intentar eliminar la tarea",
-      data: [],
-      errors: [],
-    });
+    return next(error);
   }
-};
-
-export { getAllTareas, getTareaById, createTarea, updateTarea, deleteTarea };
+}

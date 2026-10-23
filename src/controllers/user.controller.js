@@ -1,115 +1,71 @@
+import bcrypt from "bcryptjs";
 import { UserModel } from "../models/user.model.js";
+import { parse, parseId, userCreateSchema, userUpdateSchema } from "../validators.js";
+import { z } from "zod";
 
-const getUsuarios = async (req, res) => {
+const userCreateWithPasswordSchema = userCreateSchema.extend({ password: z.string().min(12).max(128) });
+
+function send(res, status, message, data) {
+  return res.status(status).json({ success: status < 400, message, data, errors: [] });
+}
+
+export async function getUsuarios(req, res, next) {
   try {
-    const usuarios = await UserModel.findAll();
-    return res.status(200).json({
-      success: true,
-      message: "Usuarios obtenidos correctamente",
-      data: usuarios,
-      errors: [],
-    });
+    return send(res, 200, "Usuarios obtenidos correctamente", await UserModel.findAll());
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Error al obtener la lista de usuarios",
-      data: [],
-      errors: [],
-    });
+    return next(error);
   }
-};
+}
 
-const getUsuarioById = async (req, res) => {
+export async function getUsuarioById(req, res, next) {
   try {
-    const { id } = req.params;
-    const usuario = await UserModel.findById(Number(id));
-
-    if (!usuario) {
-      return res.status(404).json({
-        success: false,
-        message: `Usuario con ID ${id} no encontrado`,
-        data: [],
-        errors: ["No existe"],
-      });
+    const id = parseId(req.params.id);
+    if (req.user.rol !== "admin" && req.user.sub !== id) {
+      return send(res, 403, "No tiene permisos para consultar este usuario", null);
     }
-
-    res.status(200).json(usuario);
+    const usuario = await UserModel.findById(id);
+    if (!usuario) return send(res, 404, "Usuario no encontrado", null);
+    return send(res, 200, "Usuario obtenido correctamente", usuario);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al procesar la búsqueda",
-      data: [],
-      errors: [],
-    });
+    return next(error);
   }
-};
+}
 
-const createUsuario = async (req, res) => {
+export async function createUsuario(req, res, next) {
   try {
-    const { nombre, email, telefono } = req.body;
-
-    if (!nombre || !email) {
-      return res.status(400).json({
-        success: false,
-        message: "nombre y email son obligatorios",
-        data: [],
-        errors: [],
-      });
-    }
-
-    const newUser = await UserModel.create({ nombre, email, telefono: telefono || "" });
-    res.status(201).json(newUser);
+    const { password, ...userData } = req.body;
+    const data = parse(userCreateWithPasswordSchema, { ...userData, password });
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    const user = await UserModel.create({ ...data, passwordHash });
+    return send(res, 201, "Usuario creado correctamente", user);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al crear el usuario",
-      data: [],
-      errors: [],
-    });
+    return next(error);
   }
-};
+}
 
-const deleteUsuario = async (req, res) => {
+export async function updateUsuario(req, res, next) {
   try {
-    const { id } = req.params;
-
-    // Borrado INDEPENDIENTE: el modelo solo elimina el usuario. Si tiene
-    // tareas vinculadas devuelve { deleted: false } -> 409 (Conflict).
-    // Las tareas se eliminan por separado (DELETE /tareas/:id).
-    const tareasUsuario = await UserModel.delete(Number(id));
-
-    if (typeof tareasUsuario === "object" && !tareasUsuario.deleted) {
-      return res.status(409).json({
-        success: false,
-        message: "No se puede eliminar el usuario porque tiene tareas vinculadas",
-        data: [],
-        errors: [],
-      });
+    const id = parseId(req.params.id);
+    const data = parse(userUpdateSchema, req.body);
+    if (req.user.sub === id && data.rol && data.rol !== req.user.rol) {
+      return send(res, 403, "No puede cambiar su propio rol", null);
     }
-
-    if (typeof tareasUsuario === "boolean" && !tareasUsuario) {
-      return res.status(404).json({
-        success: false,
-        message: `Usuario con ID ${id} no encontrado`,
-        data: [],
-        errors: [],
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Usuario eliminado correctamente",
-      data: [],
-      errors: [],
-    });
+    const user = await UserModel.update(id, data);
+    if (!user) return send(res, 404, "Usuario no encontrado", null);
+    return send(res, 200, "Usuario actualizado correctamente", user);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error al intentar eliminar el usuario",
-      data: [],
-      errors: [],
-    });
+    return next(error);
   }
-};
+}
 
-export { getUsuarios, getUsuarioById, createUsuario, deleteUsuario };
+export async function deleteUsuario(req, res, next) {
+  try {
+    const id = parseId(req.params.id);
+    if (req.user.sub === id) return send(res, 409, "No puede eliminar su propia cuenta", null);
+    const deleted = await UserModel.delete(id);
+    if (!deleted) return send(res, 404, "Usuario no encontrado", null);
+    return send(res, 200, "Usuario y sus tareas eliminados correctamente", null);
+  } catch (error) {
+    return next(error);
+  }
+}

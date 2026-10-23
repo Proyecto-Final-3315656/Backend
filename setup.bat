@@ -21,8 +21,8 @@ if exist ".env" (
     echo  Ya existe .env. Se conserva tal cual.
 ) else (
     copy ".env.example" ".env" >nul
-    echo  Se creo .env a partir de .env.example (Grupo3 / 12345).
-    echo  Si tu MySQL usa otras credenciales, edita el archivo .env
+    echo  Se creo .env a partir de .env.example.
+    echo  Complete DB_PASSWORD y JWT_SECRET con secretos unicos antes de iniciar.
 )
 
 echo.

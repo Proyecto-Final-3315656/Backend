@@ -3,13 +3,10 @@
 // Lee la configuración desde el archivo .env (ver .env.example).
 // ============================================================
 import mysql from "mysql2/promise";
+import { config } from "../config.js";
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "tareas_adso",
+  ...config.db,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -26,7 +23,7 @@ export async function testConnection() {
       "SELECT DATABASE() AS db, CURRENT_USER() AS user"
     );
     console.log(
-      `[BD] Conexion OK -> Base: ${rows[0].db} | Usuario: ${rows[0].user} | Host: ${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || 3306}`
+      `[BD] Conexion OK -> Base: ${rows[0].db} | Usuario: ${rows[0].user} | Host: ${config.db.host}:${config.db.port}`
     );
     connection.release();
   } catch (error) {

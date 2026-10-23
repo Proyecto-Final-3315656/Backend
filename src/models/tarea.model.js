@@ -1,6 +1,6 @@
 import pool from "../db/connection.js";
 
-const CAMPOS_ACTUALIZABLES = ["idUsuario", "nombreUsuario", "descripcion", "estado"];
+const CAMPOS_ACTUALIZABLES = ["descripcion", "estado"];
 
 // Normaliza una fecha a formato MySQL: 'YYYY-MM-DD HH:MM:SS'
 function fechaSql(valor) {
@@ -11,14 +11,16 @@ function fechaSql(valor) {
 export const TareaModel = {
   findAll: async () => {
     const [rows] = await pool.query(
-      "SELECT id, idUsuario, nombreUsuario, descripcion, estado, createdAt FROM tareas ORDER BY id"
+      `SELECT t.id, t.idUsuario, u.nombre AS nombreUsuario, t.descripcion, t.estado, t.createdAt
+       FROM tareas t INNER JOIN users u ON u.id = t.idUsuario ORDER BY t.id`
     );
     return rows;
   },
 
   findById: async (id) => {
     const [rows] = await pool.query(
-      "SELECT id, idUsuario, nombreUsuario, descripcion, estado, createdAt FROM tareas WHERE id = ?",
+      `SELECT t.id, t.idUsuario, u.nombre AS nombreUsuario, t.descripcion, t.estado, t.createdAt
+       FROM tareas t INNER JOIN users u ON u.id = t.idUsuario WHERE t.id = ?`,
       [id]
     );
     return rows[0] || null;
@@ -26,18 +28,18 @@ export const TareaModel = {
 
   findByUserId: async (idUsuario) => {
     const [rows] = await pool.query(
-      "SELECT id, idUsuario, nombreUsuario, descripcion, estado, createdAt FROM tareas WHERE idUsuario = ? ORDER BY id",
+      `SELECT t.id, t.idUsuario, u.nombre AS nombreUsuario, t.descripcion, t.estado, t.createdAt
+       FROM tareas t INNER JOIN users u ON u.id = t.idUsuario WHERE t.idUsuario = ? ORDER BY t.id`,
       [idUsuario]
     );
     return rows;
   },
 
-  create: async ({ idUsuario, nombreUsuario, descripcion, estado, createdAt }) => {
+  create: async ({ idUsuario, descripcion, estado, createdAt }) => {
     const [result] = await pool.query(
-      "INSERT INTO tareas (idUsuario, nombreUsuario, descripcion, estado, createdAt) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO tareas (idUsuario, descripcion, estado, createdAt) VALUES (?, ?, ?, ?)",
       [
         idUsuario,
-        nombreUsuario || "",
         descripcion,
         estado || "Pendiente",
         fechaSql(createdAt),
@@ -69,5 +71,10 @@ export const TareaModel = {
   delete: async (id) => {
     const [result] = await pool.query("DELETE FROM tareas WHERE id = ?", [id]);
     return result.affectedRows > 0;
+  },
+
+  belongsToUser: async (id, userId) => {
+    const [rows] = await pool.query("SELECT id FROM tareas WHERE id = ? AND idUsuario = ?", [id, userId]);
+    return rows.length > 0;
   },
 };
